@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const currentQuote = ref('')
 const quotes = [
   "✨ 哪怕再微小的光，也能照亮前路。",
@@ -21,14 +23,14 @@ onMounted(() => {
   <div class="relative py-10 px-4">
     
     <!-- Hero Section -->
-    <div class="text-center mb-10 md:mb-16 space-y-6 relative">
-      <h2 class="text-5xl md:text-8xl font-black text-black drop-shadow-sm tracking-tighter transform -rotate-2">
-        捕捉你的 <span class="bg-[#FF914D] px-4 text-white border-4 border-black rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] inline-block transform rotate-3 hover:rotate-6 transition-transform">心情</span>
+    <div class="text-center mb-8 md:mb-16 space-y-4 md:space-y-6 relative">
+      <h2 class="text-4xl md:text-8xl font-black text-black drop-shadow-sm tracking-tighter transform -rotate-2">
+        捕捉你的 <span class="bg-[#FF914D] px-2 md:px-4 text-white border-4 border-black rounded-xl md:rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] inline-block transform rotate-3 hover:rotate-6 transition-transform">心情</span>
       </h2>
       
       <!-- Daily Quote -->
-      <div class="inline-block relative group max-w-full">
-        <p class="text-lg md:text-2xl text-black font-bold bg-white border-4 border-black px-4 md:px-8 py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-1 group-hover:-rotate-1 transition-transform cursor-default whitespace-normal break-words">
+      <div class="inline-block relative group max-w-full px-2">
+        <p class="text-base md:text-2xl text-black font-bold bg-white border-4 border-black px-4 md:px-8 py-3 md:py-4 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-1 group-hover:-rotate-1 transition-transform cursor-default whitespace-normal break-words leading-relaxed">
           💡 每日灵感：{{ currentQuote }}
         </p>
         <div class="absolute -top-4 -right-4 text-4xl animate-bounce hidden md:block">✨</div>

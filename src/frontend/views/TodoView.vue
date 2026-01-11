@@ -1,14 +1,38 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const todos = ref([])
 const newTask = ref('')
 const isLoading = ref(false)
 
+const getHeaders = () => {
+  const token = localStorage.getItem('token')
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : ''
+  }
+}
+
+const handleAuthError = (res) => {
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('token')
+    router.push('/login')
+    return true
+  }
+  return false
+}
+
 // Fetch todos
 const fetchTodos = async () => {
   try {
-    const res = await fetch('/api/todos')
+    const res = await fetch('/api/todos', {
+      headers: getHeaders()
+    })
+    
+    if (handleAuthError(res)) return
+
     const data = await res.json()
     if (data.message === 'success') {
       todos.value = data.data
@@ -26,10 +50,12 @@ const addTodo = async () => {
   try {
     const res = await fetch('/api/todos', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ task: newTask.value })
     })
     
+    if (handleAuthError(res)) return
+
     if (res.ok) {
       newTask.value = ''
       await fetchTodos()
@@ -46,9 +72,12 @@ const toggleTodo = async (todo) => {
   try {
     const res = await fetch(`/api/todos/${todo.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ completed: todo.completed ? 0 : 1 })
     })
+    
+    if (handleAuthError(res)) return
+
     if (res.ok) {
       // Optimistic update locally
       todo.completed = !todo.completed
@@ -63,7 +92,13 @@ const deleteTodo = async (id) => {
   if (!confirm('确定要删除这个任务吗？')) return
 
   try {
-    const res = await fetch(`/api/todos/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/todos/${id}`, { 
+      method: 'DELETE',
+      headers: getHeaders()
+    })
+    
+    if (handleAuthError(res)) return
+
     if (res.ok) {
       todos.value = todos.value.filter(t => t.id !== id)
     }
@@ -116,21 +151,21 @@ onMounted(() => {
         <div 
           v-for="todo in todos" 
           :key="todo.id"
-          class="group flex items-center gap-5 bg-white p-5 rounded-xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer select-none"
+          class="group flex items-center gap-3 md:gap-5 bg-white p-4 md:p-5 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer select-none"
           :class="{ 'bg-gray-100 opacity-80': todo.completed }"
           @click="toggleTodo(todo)"
         >
           <!-- Checkbox -->
           <div 
-            class="w-10 h-10 rounded-lg border-4 border-black flex items-center justify-center transition-all duration-200"
+            class="w-8 h-8 md:w-10 md:h-10 rounded-lg border-4 border-black flex items-center justify-center transition-all duration-200 flex-shrink-0"
             :class="todo.completed ? 'bg-[#7FBC8C] rotate-6' : 'bg-white group-hover:bg-gray-50'"
           >
-            <span v-if="todo.completed" class="text-black text-xl font-black animate-check">✓</span>
+            <span v-if="todo.completed" class="text-black text-lg md:text-xl font-black animate-check">✓</span>
           </div>
 
           <!-- Task Text -->
           <div 
-            class="flex-1 text-2xl font-bold text-black transition-all duration-300" 
+            class="flex-1 text-lg md:text-2xl font-bold text-black transition-all duration-300 break-words min-w-0" 
             :class="{ 'line-through text-gray-400': todo.completed }"
           >
             {{ todo.task }}
@@ -139,7 +174,7 @@ onMounted(() => {
           <!-- Delete Button -->
           <button 
             @click.stop="deleteTodo(todo.id)"
-            class="w-12 h-12 flex items-center justify-center rounded-lg border-4 border-black bg-[#FF5757] text-black font-black hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100 transform rotate-3 hover:rotate-6"
+            class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg border-4 border-black bg-[#FF5757] text-black font-black hover:bg-red-600 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 transform md:rotate-3 md:hover:rotate-6 flex-shrink-0"
             title="删除"
           >
             ✕

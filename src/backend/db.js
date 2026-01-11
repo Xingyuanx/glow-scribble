@@ -45,6 +45,20 @@ class JsonDB {
     return (data[collectionName] || []).slice().reverse();
   }
 
+  // Get all items for a specific user
+  getAllByUser(collectionName, userId) {
+    const data = this._read();
+    const list = data[collectionName] || [];
+    return list.filter(item => item.userId === userId).slice().reverse();
+  }
+
+  // Find one item matching a predicate
+  findOne(collectionName, predicate) {
+    const data = this._read();
+    const list = data[collectionName] || [];
+    return list.find(predicate);
+  }
+
   // Add an item
   insert(collectionName, item) {
     const data = this._read();
