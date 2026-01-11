@@ -268,6 +268,121 @@ app.delete('/api/todos/:id', authMiddleware, (req, res) => {
   }
 });
 
+// --- Habit Tracker Routes (Protected) ---
+
+// Get all habits for current user
+app.get('/api/habits', authMiddleware, (req, res) => {
+  try {
+    const rows = db.getAllByUser('habits', req.user.id);
+    res.json({
+      message: 'success',
+      data: rows
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create a new habit
+app.post('/api/habits', authMiddleware, (req, res) => {
+  try {
+    const { name, icon, color } = req.body;
+    if (!name) {
+      res.status(400).json({ error: 'Habit name is required' });
+      return;
+    }
+    
+    const newItem = db.insert('habits', { 
+      name,
+      icon: icon || '🌱',
+      color: color || 'bg-[#7FBC8C]',
+      streak: 0,
+      lastCompleted: null,
+      prevStreak: null,
+      prevLastCompleted: null,
+      userId: req.user.id
+    });
+    
+    res.json({
+      message: 'success',
+      data: newItem
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update habit (check-in/toggle)
+app.put('/api/habits/:id/checkin', authMiddleware, (req, res) => {
+  try {
+    const item = db.findOne('habits', i => i.id == req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
+    if (item.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    let updates = {};
+
+    if (item.lastCompleted === today) {
+      // Toggle OFF: Restore previous state
+      updates = {
+        streak: item.prevStreak ?? 0,
+        lastCompleted: item.prevLastCompleted ?? null,
+        prevStreak: null,
+        prevLastCompleted: null
+      };
+    } else {
+      // Toggle ON
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      let newStreak = item.streak;
+      if (item.lastCompleted === yesterdayStr) {
+        newStreak++;
+      } else {
+        newStreak = 1; // Reset or start new streak
+      }
+
+      updates = {
+        prevStreak: item.streak,
+        prevLastCompleted: item.lastCompleted,
+        streak: newStreak,
+        lastCompleted: today
+      };
+    }
+
+    db.update('habits', req.params.id, updates);
+    
+    // Return updated item
+    const updatedItem = db.findOne('habits', i => i.id == req.params.id);
+    res.json({ message: 'success', data: updatedItem });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a habit
+app.delete('/api/habits/:id', authMiddleware, (req, res) => {
+  try {
+    const item = db.findOne('habits', i => i.id == req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Habit not found' });
+    }
+    if (item.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const changes = db.delete('habits', req.params.id);
+    res.json({ message: 'deleted', changes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Backend server running at http://localhost:${port}`);

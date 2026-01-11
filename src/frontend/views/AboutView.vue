@@ -1,6 +1,26 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, PieChart } from 'echarts/charts'
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent
+} from 'echarts/components'
+import VChart, { THEME_KEY } from 'vue-echarts'
+
+use([
+  CanvasRenderer,
+  LineChart,
+  PieChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent
+])
 
 const router = useRouter()
 const entryCount = ref(0)
@@ -8,6 +28,91 @@ const todoCount = ref(0)
 const completedTodoCount = ref(0)
 const daysActive = ref(1) // Mock data for now
 const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
+const entries = ref([]) // Store full entries for charts
+
+// Chart Data
+const moodChartOption = computed(() => {
+  if (!entries.value.length) return null
+  
+  // Sort entries by date (newest first) and take last 7
+  const recentEntries = [...entries.value]
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .slice(-7)
+    
+  const dates = recentEntries.map(e => new Date(e.created_at).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }))
+  
+  // Map moods to numeric values for line chart
+  const moodMap = {
+    'happy': 5,
+    'excited': 4,
+    'calm': 3,
+    'sad': 2,
+    'angry': 1
+  }
+  
+  const moodValues = recentEntries.map(e => moodMap[e.mood] || 3)
+  
+  return {
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b}: {c}'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates,
+      axisLine: {
+        lineStyle: {
+          color: '#000',
+          width: 2
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 6,
+      splitLine: {
+        lineStyle: {
+          type: 'dashed'
+        }
+      },
+      axisLabel: {
+        formatter: (value) => {
+          const labels = { 1: '😠', 2: '😢', 3: '😐', 4: '🤩', 5: '😊' }
+          return labels[value] || ''
+        }
+      }
+    },
+    series: [
+      {
+        name: '心情',
+        type: 'line',
+        data: moodValues,
+        smooth: true,
+        lineStyle: {
+          width: 4,
+          color: '#FF914D'
+        },
+        itemStyle: {
+          color: '#000',
+          borderWidth: 2,
+          borderColor: '#000'
+        },
+        areaStyle: {
+          color: '#FF914D',
+          opacity: 0.2
+        }
+      }
+    ]
+  }
+})
 
 // Colors for new tags
 const tagColors = [
@@ -52,6 +157,7 @@ const fetchStats = async () => {
     if (handleAuthError(resEntries)) return
     const dataEntries = await resEntries.json()
     if (dataEntries.message === 'success') {
+      entries.value = dataEntries.data
       entryCount.value = dataEntries.data.length
     }
 
@@ -141,6 +247,15 @@ const cancelEditing = () => {
 
 onMounted(() => {
   fetchStats()
+  
+  // Calculate days active
+  if (user.value.created_at) {
+    const created = new Date(user.value.created_at)
+    const now = new Date()
+    const diffTime = Math.abs(now - created)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    daysActive.value = diffDays || 1
+  }
 })
 </script>
 
@@ -152,9 +267,9 @@ onMounted(() => {
       <div class="flex items-center gap-4 md:gap-6">
         <button 
           @click="$router.push('/')" 
-          class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+          class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-[#FFDE59] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group"
         >
-          <span class="text-xl md:text-2xl font-black">←</span>
+          <span class="text-xl md:text-2xl font-black text-black group-hover:scale-110 transition-transform">←</span>
         </button>
         <h2 class="text-3xl md:text-5xl font-black text-black tracking-tighter bg-white px-4 py-1 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block transform rotate-1">
           关于我
@@ -321,13 +436,28 @@ onMounted(() => {
 
       <!-- Stat 3 -->
       <div 
-        @click="() => { window.open('https://yjfrbhgwylma.sealoshzh.site/diary', '_blank') }"
+        @click="$router.push('/diary')"
         class="bg-[#7FBC8C] p-6 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-center transform hover:-rotate-1 transition-transform cursor-pointer hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]"
       >
         <div class="text-5xl mb-2">🌟</div>
         <div class="text-4xl font-black text-black mb-1">{{ daysActive }}</div>
         <div class="font-bold text-black">天加入</div>
       </div>
+    </div>
+
+    <!-- Mood Chart Section -->
+    <div v-if="moodChartOption" class="bg-white rounded-3xl p-6 md:p-8 border-4 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] mb-12 relative overflow-hidden">
+      <div class="flex items-center justify-between mb-6 relative z-10">
+        <h3 class="text-3xl font-black text-black">📊 心情趋势</h3>
+        <span class="bg-black text-white px-3 py-1 rounded-lg font-bold text-sm transform rotate-2">最近 7 天</span>
+      </div>
+      
+      <div class="h-64 md:h-80 w-full relative z-10">
+        <v-chart class="chart" :option="moodChartOption" autoresize />
+      </div>
+
+      <!-- Background Decorations -->
+      <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-[#FF914D] rounded-full border-4 border-black opacity-20"></div>
     </div>
 
     <!-- Links / Contact -->

@@ -71,9 +71,9 @@ onUnmounted(() => {
     <div class="flex items-center gap-4 md:gap-6 mb-8">
       <button 
         @click="$router.push('/')" 
-        class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+        class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-[#FF5757] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group"
       >
-        <span class="text-xl md:text-2xl font-black">←</span>
+        <span class="text-xl md:text-2xl font-black text-white group-hover:scale-110 transition-transform">←</span>
       </button>
       <h2 class="text-3xl md:text-5xl font-black text-black tracking-tighter bg-white px-4 py-1 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block transform rotate-1">
         番茄专注

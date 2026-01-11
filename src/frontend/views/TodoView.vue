@@ -4,7 +4,10 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const todos = ref([])
+const habits = ref([])
 const newTask = ref('')
+const newHabitName = ref('')
+const showHabitInput = ref(false)
 const isLoading = ref(false)
 
 const getHeaders = () => {
@@ -39,6 +42,89 @@ const fetchTodos = async () => {
     }
   } catch (err) {
     console.error('Failed to fetch todos:', err)
+  }
+}
+
+// Fetch habits
+const fetchHabits = async () => {
+  try {
+    const res = await fetch('/api/habits', { headers: getHeaders() })
+    if (handleAuthError(res)) return
+    const data = await res.json()
+    if (data.message === 'success') {
+      habits.value = data.data
+    }
+  } catch (err) {
+    console.error('Failed to fetch habits:', err)
+  }
+}
+
+// Add habit
+const addHabit = async () => {
+  if (!newHabitName.value.trim()) return
+  
+  const icons = ['💧', '🏃', '📚', '🧘', '🥗', '💊', '🧹', '🎨']
+  const colors = ['bg-[#7FBC8C]', 'bg-[#5492FE]', 'bg-[#FF914D]', 'bg-[#FF5757]']
+  
+  try {
+    const res = await fetch('/api/habits', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ 
+        name: newHabitName.value,
+        icon: icons[Math.floor(Math.random() * icons.length)],
+        color: colors[Math.floor(Math.random() * colors.length)]
+      })
+    })
+    
+    if (handleAuthError(res)) return
+    if (res.ok) {
+      newHabitName.value = ''
+      showHabitInput.value = false
+      await fetchHabits()
+    }
+  } catch (err) {
+    console.error('Failed to add habit:', err)
+  }
+}
+
+// Check-in habit
+const checkinHabit = async (habit) => {
+  try {
+    const res = await fetch(`/api/habits/${habit.id}/checkin`, {
+      method: 'PUT',
+      headers: getHeaders()
+    })
+    
+    if (handleAuthError(res)) return
+    
+    const data = await res.json()
+    if (res.ok) {
+      // Update local state
+      const index = habits.value.findIndex(h => h.id === habit.id)
+      if (index !== -1) {
+        habits.value[index] = data.data
+      }
+    }
+  } catch (err) {
+    console.error('Failed to checkin habit:', err)
+  }
+}
+
+// Delete habit
+const deleteHabit = async (id) => {
+  if (!confirm('确定要删除这个习惯吗？')) return
+  try {
+    const res = await fetch(`/api/habits/${id}`, { 
+      method: 'DELETE',
+      headers: getHeaders()
+    })
+    if (handleAuthError(res)) return
+    if (res.ok) {
+      habits.value = habits.value.filter(h => h.id !== id)
+    }
+  } catch (err) {
+    console.error('Failed to delete habit:', err)
   }
 }
 
@@ -109,6 +195,7 @@ const deleteTodo = async (id) => {
 
 onMounted(() => {
   fetchTodos()
+  fetchHabits()
 })
 </script>
 
@@ -118,16 +205,74 @@ onMounted(() => {
     <div class="flex items-center gap-4 md:gap-6 mb-8">
       <button 
         @click="$router.push('/')" 
-        class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+        class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-[#5492FE] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group"
       >
-        <span class="text-xl md:text-2xl font-black">←</span>
+        <span class="text-xl md:text-2xl font-black text-white group-hover:scale-110 transition-transform">←</span>
       </button>
       <h2 class="text-3xl md:text-5xl font-black text-black tracking-tighter bg-white px-4 py-1 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block transform rotate-1">
         愿望清单
       </h2>
     </div>
 
-    <!-- Input Section -->
+    <!-- Habit Tracker Section -->
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-2xl font-black text-black">🌱 小习惯打卡</h3>
+        <button 
+          @click="showHabitInput = !showHabitInput"
+          class="text-sm font-bold bg-black text-white px-3 py-1 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          {{ showHabitInput ? '取消' : '添加习惯' }}
+        </button>
+      </div>
+
+      <!-- Add Habit Input -->
+      <div v-if="showHabitInput" class="flex gap-2 mb-4 animate-slide-down">
+        <input 
+          v-model="newHabitName"
+          @keyup.enter="addHabit"
+          type="text" 
+          placeholder="习惯名称 (如: 喝水)" 
+          class="flex-1 px-4 py-2 border-4 border-black rounded-xl focus:outline-none"
+        >
+        <button @click="addHabit" class="px-4 py-2 bg-[#7FBC8C] border-4 border-black rounded-xl font-bold">OK</button>
+      </div>
+
+      <!-- Habits Horizontal Scroll -->
+      <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+        <div 
+          v-for="habit in habits" 
+          :key="habit.id"
+          class="flex-shrink-0 w-32 h-32 bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative group cursor-pointer hover:-translate-y-1 transition-transform flex flex-col items-center justify-center gap-2 select-none"
+          @click="checkinHabit(habit)"
+        >
+          <button 
+            @click.stop="deleteHabit(habit.id)"
+            class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white text-xs rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          >✕</button>
+          
+          <div class="text-4xl transition-transform" :class="{ 'scale-125': habit.lastCompleted === new Date().toISOString().split('T')[0] }">
+            {{ habit.icon }}
+          </div>
+          <div class="font-bold text-sm">{{ habit.name }}</div>
+          
+          <!-- Streak Badge -->
+          <div v-if="habit.streak > 0" class="absolute -bottom-2 bg-black text-white text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+            🔥 {{ habit.streak }}
+          </div>
+          
+          <!-- Done Overlay -->
+          <div v-if="habit.lastCompleted === new Date().toISOString().split('T')[0]" class="absolute inset-0 bg-[#7FBC8C] opacity-20 rounded-xl pointer-events-none"></div>
+        </div>
+        
+        <!-- Empty State for Habits -->
+        <div v-if="habits.length === 0 && !showHabitInput" class="flex-shrink-0 w-32 h-32 border-4 border-black border-dashed rounded-2xl flex items-center justify-center text-gray-400 font-bold text-sm text-center p-2">
+          点击右上角<br>添加习惯
+        </div>
+      </div>
+    </div>
+
+    <!-- Todo Input Section -->
     <div class="flex gap-4 mb-8 md:mb-12 flex-col sm:flex-row">
       <input 
         v-model="newTask"

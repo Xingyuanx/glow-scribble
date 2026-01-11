@@ -47,7 +47,12 @@ const handleSubmit = async () => {
       // Redirect to home
       router.push('/')
     } else {
-      errorMsg.value = data.error || '操作失败'
+      const errorMap = {
+        'Invalid username or password': '用户名或密码错误',
+        'Username already exists': '用户名已存在',
+        'Username and password are required': '请输入用户名和密码'
+      }
+      errorMsg.value = errorMap[data.error] || data.error || '操作失败'
     }
   } catch (err) {
     errorMsg.value = '网络错误，请稍后重试'

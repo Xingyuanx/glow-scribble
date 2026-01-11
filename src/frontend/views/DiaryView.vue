@@ -198,9 +198,9 @@ onMounted(() => {
     <div class="flex items-center gap-4 md:gap-6 mb-8">
       <button 
         @click="$router.push('/')" 
-        class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+        class="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl bg-[#7FBC8C] border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group"
       >
-        <span class="text-xl md:text-2xl font-black">←</span>
+        <span class="text-xl md:text-2xl font-black text-white group-hover:scale-110 transition-transform">←</span>
       </button>
       <h2 class="text-3xl md:text-5xl font-black text-black tracking-tighter bg-white px-4 py-1 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block transform -rotate-1">
         心情日记
@@ -210,11 +210,17 @@ onMounted(() => {
     <!-- Calendar Section -->
     <div class="bg-white rounded-3xl p-4 md:p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 md:mb-12">
       <div class="flex justify-between items-center mb-6">
-        <button @click="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg font-black text-xl border-2 border-transparent hover:border-black transition-all">←</button>
+        <button 
+          @click="changeMonth(-1)" 
+          class="w-10 h-10 flex items-center justify-center bg-white border-4 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all font-black text-xl"
+        >←</button>
         <h3 class="text-xl md:text-2xl font-black text-black">
           {{ currentYear }}年 {{ currentMonth + 1 }}月
         </h3>
-        <button @click="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-lg font-black text-xl border-2 border-transparent hover:border-black transition-all">→</button>
+        <button 
+          @click="changeMonth(1)" 
+          class="w-10 h-10 flex items-center justify-center bg-white border-4 border-black rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all font-black text-xl"
+        >→</button>
       </div>
       
       <div class="grid grid-cols-7 gap-1 md:gap-2 text-center mb-2">

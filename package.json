@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "echarts": "^6.0.0",
     "vue": "^3.4.29",
+    "vue-echarts": "^8.0.1",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
