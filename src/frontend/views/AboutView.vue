@@ -20,6 +20,7 @@ const avatarOptions = ['😎', '🤖', '👻', '🐱', '🐶', '🦊', '🦁', '
 
 // Editing state
 const isEditing = ref(false)
+const showAvatarSelector = ref(false)
 const editBio = ref('')
 const editTags = ref([])
 const editAvatar = ref('')
@@ -119,6 +120,7 @@ const saveBio = async () => {
       user.value = data.user
       localStorage.setItem('user', JSON.stringify(data.user))
       isEditing.value = false
+      showAvatarSelector.value = false
     } else {
       alert(data.error || '保存失败')
     }
@@ -132,6 +134,7 @@ const saveBio = async () => {
 
 const cancelEditing = () => {
   isEditing.value = false
+  showAvatarSelector.value = false
   editBio.value = ''
   editTags.value = []
 }
@@ -180,19 +183,23 @@ onMounted(() => {
         <div class="flex flex-col md:flex-row items-center gap-6 md:gap-8">
           <!-- Avatar Area -->
           <div class="shrink-0 relative group">
-            <div class="w-32 h-32 md:w-40 md:h-40 bg-[#FFDE59] rounded-full border-4 border-black flex items-center justify-center text-6xl md:text-8xl overflow-hidden relative z-10 transition-transform">
+            <div 
+              class="w-32 h-32 md:w-40 md:h-40 bg-[#FFDE59] rounded-full border-4 border-black flex items-center justify-center text-6xl md:text-8xl overflow-hidden relative z-10 transition-transform"
+              :class="{ 'cursor-pointer hover:scale-105 active:scale-95': isEditing }"
+              @click="isEditing && (showAvatarSelector = !showAvatarSelector)"
+            >
               {{ isEditing ? editAvatar : (user.avatar || '😎') }}
             </div>
             <!-- Decorative Elements behind avatar -->
             <div class="absolute -top-4 -left-4 w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-black bg-black z-0"></div>
             
             <!-- Avatar Selector Popup -->
-            <div v-if="isEditing" class="absolute top-full left-1/2 -translate-x-1/2 mt-4 bg-white border-4 border-black rounded-xl p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-64 z-50">
+            <div v-if="isEditing && showAvatarSelector" class="absolute top-full left-1/2 -translate-x-1/2 mt-4 bg-white border-4 border-black rounded-xl p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-64 z-50">
               <div class="grid grid-cols-6 gap-2">
                 <button 
                   v-for="avatar in avatarOptions" 
                   :key="avatar"
-                  @click="editAvatar = avatar"
+                  @click="editAvatar = avatar; showAvatarSelector = false"
                   class="w-8 h-8 flex items-center justify-center text-xl hover:bg-gray-100 rounded transition-colors"
                   :class="{ 'bg-[#FFDE59]': editAvatar === avatar }"
                 >

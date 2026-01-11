@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const currentQuote = ref('')
+const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const quotes = [
   "✨ 哪怕再微小的光，也能照亮前路。",
   "🌱 种一棵树最好的时间是十年前，其次是现在。",
@@ -141,7 +142,7 @@ onMounted(() => {
         <div class="relative z-10 flex flex-col h-full justify-between">
           <div>
             <div class="w-20 h-20 bg-white border-4 border-black rounded-2xl flex items-center justify-center mb-6 text-4xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group-hover:-rotate-12 transition-transform">
-              😎
+              {{ user.avatar || '😎' }}
             </div>
             <h3 class="text-4xl font-black mb-4 text-black tracking-tight">关于我</h3>
             <p class="text-black font-bold text-lg mb-8 leading-relaxed">查看个人档案，统计数据，以及更多联系方式。</p>
